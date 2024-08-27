@@ -1,0 +1,80 @@
+import telebot
+
+bot = telebot.TeleBot("YOUR_TELEGRAM_BOT_TOKEN")
+
+menu_items = {
+    "coffee": {
+        "small": 2.50,
+        "medium": 3.00,
+        "large": 3.50
+    },
+    "tea": {
+        "small": 2.00,
+        "medium": 2.50,
+        "large": 3.00
+    }
+}
+
+menu_items2 = {
+    "cola": {
+        "small": 1.50,
+        "medium": 2.00,
+        "large": 2.50
+    }
+}
+
+def display_payment_options(item_name, item_sizes):
+    markup = telebot.types.InlineKeyboardMarkup()
+    for size in item_sizes:
+        callback_data = f"pay_{item_name}_{size}"
+        button = telebot.types.InlineKeyboardButton(f"{size.capitalize()} - ${item_sizes[size]}", callback_data=callback_data)
+        markup.add(button)
+    return markup
+
+def display_payment_options2(item_name, item_sizes):
+    markup = telebot.types.InlineKeyboardMarkup()
+    for size in item_sizes:
+        callback_data = f"pay-{item_name}-{size}"
+        button = telebot.types.InlineKeyboardButton(f"{size.capitalize()} - ${item_sizes[size]}", callback_data=callback_data)
+        markup.add(button)
+    return markup
+
+@bot.callback_query_handler(func=lambda call: True)
+def handle_payment(call):
+    if call.data.startswith("pay_"):
+        data_parts = call.data.split("_")
+        item_name = data_parts[1] if len(data_parts) > 1 else None
+        size = data_parts[2] if len(data_parts) > 2 else None
+        amount = menu_items.get(item_name, {}).get(size)
+
+        if amount is not None:
+            bot.reply_to(call.message, f"Payment processed for {item_name} - {size}. Amount: {amount}")
+        else:
+            bot.reply_to(call.message, "Error: Amount not found.")
+
+    elif call.data.startswith("pay-"):
+        data_parts = call.data.split("-")
+        item_name = data_parts[1]
+        size = data_parts[2]
+        amount = menu_items2.get(item_name, {}).get(size)
+
+        if amount is not None:
+            bot.reply_to(call.message, f"Payment processed for {item_name} - {size}. Amount: {amount}")
+        else:
+            bot.reply_to(call.message, "Error: Amount not found.")
+
+    else:
+        print(f"Unknown callback data: {call.data}")
+
+@bot.message_handler(commands=['start'])
+def send_welcome(message):
+    bot.reply_to(message, "Welcome! Here is our menu:")
+    for item in menu_items:
+        markup = display_payment_options(item, menu_items[item])
+        bot.send_message(message.chat.id, f"{item.capitalize()} Options:", reply_markup=markup)
+
+    for item in menu_items2:
+        markup = display_payment_options2(item, menu_items2[item])
+        bot.send_message(message.chat.id, f"{item.capitalize()} Options:", reply_markup=markup)
+
+bot.polling()
