@@ -1,7 +1,7 @@
 import telebot
 from telebot import types
 
-token = '7523792865:AAEiDOJHA3HeVvmo_zAj11jQ4RC9GENsols'
+token = ''
 shopId =506751
 
 shopArticleId =538350
